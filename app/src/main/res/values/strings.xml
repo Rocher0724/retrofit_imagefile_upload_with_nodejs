@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Retrofit2Study</string>
+    <string name="internal_storage">Internal storage</string>
+</resources>

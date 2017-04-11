@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="choongyul.android.com.retrofit2study.WriteActivity"
+    tools:showIn="@layout/activity_write">
+
+    <EditText
+        android:id="@+id/etTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:ems="10"
+        android:hint="title"
+        android:inputType="textPersonName"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="0dp"
+        android:layout_marginRight="0dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_bias="0.0" />
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/etTitle"
+        android:ems="10"
+        android:hint="name"
+        android:inputType="textPersonName"
+        android:layout_marginTop="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/etTitle"
+        android:layout_marginRight="0dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="0dp"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+    <EditText
+        android:id="@+id/etContent"
+        android:layout_width="0dp"
+        android:layout_height="100dp"
+        android:layout_alignEnd="@+id/etName"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/etName"
+        android:ems="10"
+        android:hint="content"
+        android:inputType="textPersonName"
+        android:layout_marginTop="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/etName"
+        android:layout_marginRight="0dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="0dp"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="0dp"
+        android:layout_height="100dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/etContent"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etContent"
+        app:srcCompat="@mipmap/ic_launcher" />
+
+    <Button
+        android:id="@+id/btnWriteGoGal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:text="Button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+</android.support.constraint.ConstraintLayout>
