@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 
 import java.io.File;
 
+import choongyul.android.com.retrofit2study.domain.Data;
 import choongyul.android.com.retrofit2study.domain.DataStore;
 import choongyul.android.com.retrofit2study.domain.Qna;
 import jp.wasabeef.glide.transformations.BlurTransformation;
@@ -66,50 +67,18 @@ public class WriteActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AsyncTask<String, Void, String> networkTask = new AsyncTask<String, Void, String>(){
-                    @Override
-                    protected void onPreExecute() {
-                        super.onPreExecute();
-                    }
+                Log.e(TAG,"온클릭들어옴");
+                Qna qna = new Qna();
+                qna.setTitle(etTitle.getText() + "");
+                qna.setContent(etContent.getText() + "");
+                qna.setName(etName.getText() + "");
 
-                    @Override
-                    protected String doInBackground(String... params) {
-                        String title = params[0];
-                        String name = params[1];
-                        String content = params[2];
-
-                        Qna qna = new Qna();
-                        qna.setTitle(title);
-                        qna.setName(name);
-                        qna.setContent(content);
-
-                        Gson gson = new Gson();
-                        String jsonString = gson.toJson(qna);
-
-                        String result = Remote.postJson(SITE_URL + "post", jsonString);
-
-                        if("SUCCESS".equals(result)) {
-                            DataStore dataStore = DataStore.getInstance();
-                            dataStore.addData(qna);
-                        }
-
-                        return result;
-                    }
-
-                    @Override
-                    protected void onPostExecute(String s) {
-                        super.onPostExecute(s);
-                        Toast.makeText(WriteActivity.this, "작성되었습니다.", Toast.LENGTH_SHORT).show();
-                        finish();
-
-                    }
-                };
-                networkTask.execute(
-                        etTitle.getText() + ""
-                        ,etName.getText() + ""
-                        ,etContent.getText() + "");
-
+                uploadText(qna);
                 uploadFile(fileUri);
+
+//                uploadBoth(qna, fileUri);
+
+                ///////////////////////////////
             }
         });
         btnGoGal.setOnClickListener(new View.OnClickListener() {
@@ -120,11 +89,43 @@ public class WriteActivity extends AppCompatActivity {
         });
     }
 
-    private void goGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*"); // 외부저장소에 있는 이미지만 가져오기 위한 필터링
-        startActivityForResult( Intent.createChooser(intent, " Select Picture"), REQ_GALLERY);
+    private void uploadBoth(Qna qna, Uri fileUri) {
+        File file = new File(fileUri.getPath());
+        RequestBody fbody = RequestBody.create(MediaType.parse("image/*"), file);
+        RequestBody title = RequestBody.create(MediaType.parse("text/plain"), qna.getTitle());
+        RequestBody content = RequestBody.create(MediaType.parse("text/plain"), qna.getContent());
+        RequestBody name = RequestBody.create(MediaType.parse("text/plain"), qna.getName());
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        UserClient client = retrofit.create(UserClient.class);
+        Call<Qna> call = client.editUser(fbody, title, content, name);
+
+        call.enqueue(new Callback<Qna>() {
+
+            @Override
+            public void onResponse(Call<Qna> call, Response<Qna> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<Qna> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
     }
+
+    // 내 갤러리에 있는 이미지만 받아올 수 있도록 세팅
+    private void goGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
+        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult( intent, REQ_GALLERY);
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -172,7 +173,8 @@ public class WriteActivity extends AppCompatActivity {
         RequestBody descriptionPart = RequestBody.create(MultipartBody.FORM, descriptionString);
 
         File originalFile = FileUtils.getFile(this, fileUri);
-
+//        File file = new File(fileUri.getPath()); // 그냥 이렇게 하면되는거데 너무 어렵게 한건아닌가?
+        Log.e(TAG,"fileUri" + fileUri);
         RequestBody filePart = RequestBody.create(
                         MediaType.parse(getContentResolver().getType(fileUri)),
                         originalFile
@@ -195,6 +197,7 @@ public class WriteActivity extends AppCompatActivity {
                                    Response<ResponseBody> response) {
                 Toast.makeText(WriteActivity.this, "Yeah!!!", Toast.LENGTH_SHORT).show();
                 Log.v("Upload", "success");
+                finish();
             }
 
             @Override
@@ -203,5 +206,38 @@ public class WriteActivity extends AppCompatActivity {
                 Log.e("Upload error:", t.getMessage());
             }
         });
+    }
+    private void uploadText(Qna qna){
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(qna);
+
+        DataInterface localhost = retrofit.create(DataInterface.class);
+        Call<Qna> call = localhost.setDB(qna);
+
+        call.enqueue(new Callback<Qna>() {
+            @Override
+            public void onResponse(Call<Qna> call, Response<Qna> response) {
+                if( response.isSuccessful() ){
+                    Log.e("uploadText","정상적으로 리턴되었다.");
+//                    finish();
+
+
+                } else {
+                    Log.e("onResponse","비정상적으로 리턴되었다. = " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Qna> call, Throwable t) {
+
+            }
+        });
+
     }
 }

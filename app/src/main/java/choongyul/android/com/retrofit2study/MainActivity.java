@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -178,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
 }
 
 class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
+    private static final String TAG = "CustomAdapter";
     List<Qna> datas;
     Context context;
 
@@ -197,6 +199,8 @@ class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
         Qna qna = datas.get(position);
         holder.tvTitle.setText(qna.getTitle());
         holder.tvName.setText(qna.getName());
+        holder.position = position;
+        Log.e(TAG,"_id : " + qna.get_id());
     }
 
     @Override
@@ -207,10 +211,21 @@ class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle;
         TextView tvName;
+        LinearLayout li;
+        int position;
         public ViewHolder(View itemView) {
             super(itemView);
             tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
             tvName = (TextView) itemView.findViewById(R.id.tvName);
+            li = (LinearLayout) itemView.findViewById(R.id.li);
+            li.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, DetailActivity.class);
+                    intent.putExtra("position", position);
+                    context.startActivity(intent);
+                }
+            });
         }
     }
 

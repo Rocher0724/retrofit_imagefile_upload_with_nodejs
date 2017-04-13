@@ -29,7 +29,7 @@ public class Remote {
 
             connection.setDoOutput(true);
             OutputStream os = connection.getOutputStream();
-
+            Log.e("냠냠",data.getBytes().toString());
             os.write(data.getBytes());
 
             os.flush();

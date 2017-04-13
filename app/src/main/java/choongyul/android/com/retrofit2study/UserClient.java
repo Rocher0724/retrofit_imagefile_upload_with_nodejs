@@ -1,5 +1,6 @@
 package choongyul.android.com.retrofit2study;
 
+import choongyul.android.com.retrofit2study.domain.Qna;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -20,4 +21,11 @@ public interface UserClient {
             @Part("description") RequestBody description,
             @Part MultipartBody.Part file
     );
+
+    @Multipart
+    @POST("postingdata")
+    Call<Qna> editUser (@Part("file\"; filename=\"pp.png\" ") RequestBody file
+                        , @Part("title") RequestBody title
+                        , @Part("content") RequestBody content
+                        , @Part("name") RequestBody name);
 }
