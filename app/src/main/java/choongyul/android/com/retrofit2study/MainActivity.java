@@ -21,11 +21,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import choongyul.android.com.retrofit2study.domain.Data;
 import choongyul.android.com.retrofit2study.domain.DataStore;
 import choongyul.android.com.retrofit2study.domain.Qna;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,12 +36,12 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String SITE_URL = "http://192.168.0.15:80/";
+    public static final String SITE_URL = "http://192.168.0.13/";
     private static final int REQ_PERMISSION = 101;
     RecyclerView recyclerView;
     CustomAdapter adapter;
     List<Qna> datas;
-    Button button;
+    Button button, button2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,11 +54,52 @@ public class MainActivity extends AppCompatActivity {
         getData();
         setList();
         button = (Button) findViewById(R.id.button);
+        button2 = (Button) findViewById(R.id.button2);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, WriteActivity.class);
                 startActivity(intent);
+            }
+        });
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                retrofitttt();
+            }
+        });
+    }
+
+    private void retrofitttt() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        DataInterface localhost = retrofit.create(DataInterface.class);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("title", "aa");
+        map.put("content", "aaa");
+        map.put("name", "aaaa");
+        Call<String> result = localhost.asdasd(map);
+
+        result.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                // 값이 정상적으로 리턴되었을 때
+                if( response.isSuccessful() ){
+
+
+                    Log.e("값이","정상리턴");
+                } else {
+                    Log.e("onResponse","값이 비정상적으로 리턴되었다. = " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+
             }
         });
     }

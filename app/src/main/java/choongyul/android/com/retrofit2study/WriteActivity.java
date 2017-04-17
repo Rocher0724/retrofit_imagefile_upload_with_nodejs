@@ -1,9 +1,12 @@
 package choongyul.android.com.retrofit2study;
 
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -23,10 +26,16 @@ import com.bumptech.glide.request.target.Target;
 import com.google.gson.Gson;
 
 import java.io.File;
-
-import choongyul.android.com.retrofit2study.domain.Data;
-import choongyul.android.com.retrofit2study.domain.DataStore;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import choongyul.android.com.retrofit2study.domain.Qna;
+import choongyul.android.com.retrofit2study.domain.Token;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import jp.wasabeef.glide.transformations.ColorFilterTransformation;
 import okhttp3.MediaType;
@@ -38,6 +47,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Part;
 
 import static choongyul.android.com.retrofit2study.MainActivity.SITE_URL;
 
@@ -51,6 +61,7 @@ public class WriteActivity extends AppCompatActivity {
     private Uri selectedImageUrl;
     ImageView imageView;
     Uri fileUri;
+    private boolean goGalleryFlag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +84,16 @@ public class WriteActivity extends AppCompatActivity {
                 qna.setContent(etContent.getText() + "");
                 qna.setName(etName.getText() + "");
 
-                uploadText(qna);
-                uploadFile(fileUri);
+//
+                if( goGalleryFlag ) {
+                    uploadFile2(fileUri, qna);
+                } else {
+                    whenUserNoSelectImage(R.drawable.ic_launcher);
+                    uploadFile1(fileUri , qna);
+                }
 
-//                uploadBoth(qna, fileUri);
+//
 
-                ///////////////////////////////
             }
         });
         btnGoGal.setOnClickListener(new View.OnClickListener() {
@@ -164,22 +179,95 @@ public class WriteActivity extends AppCompatActivity {
                         , new BlurTransformation(this, 10)
                         , new ColorFilterTransformation(this, Color.argb(100, 100, 100, 100)))
                 .into(imageView);
+        goGalleryFlag = true;
         fileUri = data.getData();
+        Log.e(TAG, fileUri + "");
     }
 
-    private void uploadFile(Uri fileUri) {
+    private void whenUserNoSelectImage(int resid) {
+        Resources res = this.getResources();
+        Bitmap bitmap = BitmapFactory.decodeResource(res,
+                resid);
+        String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
 
-        String descriptionString = "userfile";
-        RequestBody descriptionPart = RequestBody.create(MultipartBody.FORM, descriptionString);
+        File file = new File(extStorageDirectory, "ic_launcher.PNG");
+        OutputStream outStream = null;
+        try {
+            outStream = new FileOutputStream(file);
+
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+        outStream.flush();
+        outStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                outStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        fileUri = Uri.parse(file.getPath());
+        Log.e(TAG, fileUri + "");
+        if( file != null) {
+            Log.e(TAG, "파일이 있다");
+            return;
+        } else {
+            Log.e(TAG, "파일이 없다");
+            return;
+        }
+
+    }
+
+    private void SaveBitmapToFileCache(Bitmap bitmap, String strFilePath) {
+        File fileCacheItem = new File(strFilePath);
+        OutputStream out = null;
+        try {
+            fileCacheItem.createNewFile();
+            out = new FileOutputStream(fileCacheItem);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void uploadFile(final Uri fileUri, Qna qna) {
+
+        // Qna 클래스는 title, content, name 으로 구성되어있다.
+        RequestBody qnaPart1 = RequestBody.create(MultipartBody.FORM, qna.getTitle());
+        RequestBody qnaPart2 = RequestBody.create(MultipartBody.FORM, qna.getContent());
+        RequestBody qnaPart3 = RequestBody.create(MultipartBody.FORM, qna.getName());
+
+        //////
+        Gson gson = new Gson();
+        String qnaJsonString = gson.toJson(qna);
+        MultipartBody.Part qnaToJson = MultipartBody.Part.createFormData("qna.json", qnaJsonString);
+
+        Token.setKey("asdasdasdasdasd");
+        Map<String, RequestBody> map = new HashMap<>();
+        map.put("title", qnaPart1);
+        map.put("content", qnaPart2);
+        map.put("name", qnaPart3);
 
         File originalFile = FileUtils.getFile(this, fileUri);
-//        File file = new File(fileUri.getPath()); // 그냥 이렇게 하면되는거데 너무 어렵게 한건아닌가?
-        Log.e(TAG,"fileUri" + fileUri);
-        RequestBody filePart = RequestBody.create(
-                        MediaType.parse(getContentResolver().getType(fileUri)),
-                        originalFile
-                );
 
+        RequestBody filePart = RequestBody.create(
+                MediaType.parse(getContentResolver().getType(fileUri)),
+                originalFile
+        );
+
+
+//        File originalFile = new File(String.valueOf(fileUri));
+//        RequestBody filePart = RequestBody.create(MediaType.parse("multipart/form-data"), originalFile);
+
+
+                                                                // 이미지 넣을때 키값
         MultipartBody.Part file = MultipartBody.Part.createFormData("userfile", originalFile.getName() , filePart);
 
         Retrofit.Builder builder = new Retrofit.Builder()
@@ -189,55 +277,166 @@ public class WriteActivity extends AppCompatActivity {
         Retrofit retrofit = builder.build();
         UserClient client = retrofit.create(UserClient.class);
 
-        // finally, execute the request
-        Call<ResponseBody> call = client.upload(descriptionPart, file);
+        Call<ResponseBody> call = client.upload(Token.getKey(), map, file);
+//        Call<ResponseBody> call2 = client.upload(qnaToJson, file); // 제이슨 키값 캐치가 가능한경우.
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call,
                                    Response<ResponseBody> response) {
-                Toast.makeText(WriteActivity.this, "Yeah!!!", Toast.LENGTH_SHORT).show();
-                Log.v("Upload", "success");
-                finish();
+                if(response.code() == 200) {
+                    Toast.makeText(WriteActivity.this, "Yeah!!!", Toast.LENGTH_SHORT).show();
+                    Log.v("Upload", "success");
+//                    File file = new File(String.valueOf(fileUri));
+//                    file.delete();
+                    finish();
+                }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Toast.makeText(WriteActivity.this, "nooooo!!!", Toast.LENGTH_SHORT).show();
+                File file = new File(String.valueOf(fileUri));
+                file.delete();
                 Log.e("Upload error:", t.getMessage());
             }
         });
     }
-    private void uploadText(Qna qna){
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(SITE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
 
 
+
+    private void uploadFile1(final Uri fileUri, Qna qna) {
+
+        // Qna 클래스는 title, content, name 으로 구성되어있다.
+        RequestBody qnaPart1 = RequestBody.create(MultipartBody.FORM, qna.getTitle());
+        RequestBody qnaPart2 = RequestBody.create(MultipartBody.FORM, qna.getContent());
+        RequestBody qnaPart3 = RequestBody.create(MultipartBody.FORM, qna.getName());
+
+        //////
         Gson gson = new Gson();
-        String jsonString = gson.toJson(qna);
+        String qnaJsonString = gson.toJson(qna);
+        MultipartBody.Part qnaToJson = MultipartBody.Part.createFormData("qna.json", qnaJsonString);
 
-        DataInterface localhost = retrofit.create(DataInterface.class);
-        Call<Qna> call = localhost.setDB(qna);
+        Token.setKey("asdasdasdasdasd");
+        Map<String, RequestBody> map = new HashMap<>();
+        map.put("title", qnaPart1);
+        map.put("content", qnaPart2);
+        map.put("name", qnaPart3);
 
-        call.enqueue(new Callback<Qna>() {
+//        Uri fileUri1 = Uri.parse("http://cfile9.uf.tistory.com/image/25621D40573264E71FA362");
+//        File originalFile = FileUtils.getFile(this, fileUri);
+        File originalFile = new File(String.valueOf(fileUri));
+        RequestBody filePart = RequestBody.create(MediaType.parse("multipart/form-data"), originalFile);
+
+//        File file = new File(filePath);
+//        RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+//        Call<ApiResponse> call = service.upload(token, userId, msg, requestBody);
+
+
+
+//        RequestBody filePart = RequestBody.create(
+//                MediaType.parse(getContentResolver().getType(fileUri)),
+//                originalFile
+//        );
+        // 이미지 넣을때 키값
+        MultipartBody.Part file = MultipartBody.Part.createFormData("userfile", originalFile.getName() , filePart);
+
+        Retrofit.Builder builder = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create());
+
+        Retrofit retrofit = builder.build();
+        UserClient client = retrofit.create(UserClient.class);
+
+        Call<ResponseBody> call = client.upload1(map, file);
+//        Call<ResponseBody> call2 = client.upload(qnaToJson, file); // 제이슨 키값 캐치가 가능한경우.
+        call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<Qna> call, Response<Qna> response) {
-                if( response.isSuccessful() ){
-                    Log.e("uploadText","정상적으로 리턴되었다.");
-//                    finish();
-
-
-                } else {
-                    Log.e("onResponse","비정상적으로 리턴되었다. = " + response.message());
+            public void onResponse(Call<ResponseBody> call,
+                                   Response<ResponseBody> response) {
+                if(response.code() == 200) {
+                    Toast.makeText(WriteActivity.this, "Yeah!!!", Toast.LENGTH_SHORT).show();
+                    Log.v("Upload", "success");
+//                    File file = new File(String.valueOf(fileUri));
+//                    file.delete();
+                    finish();
                 }
             }
 
             @Override
-            public void onFailure(Call<Qna> call, Throwable t) {
-
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(WriteActivity.this, "nooooo!!!", Toast.LENGTH_SHORT).show();
+                File file = new File(String.valueOf(fileUri));
+                file.delete();
+                Log.e("Upload error:", t.getMessage());
             }
         });
+    }
 
+    private void uploadFile2(final Uri fileUri, Qna qna) {
+
+        // Qna 클래스는 title, content, name 으로 구성되어있다.
+        RequestBody qnaPart1 = RequestBody.create(MultipartBody.FORM, qna.getTitle());
+        RequestBody qnaPart2 = RequestBody.create(MultipartBody.FORM, qna.getContent());
+        RequestBody qnaPart3 = RequestBody.create(MultipartBody.FORM, qna.getName());
+
+        //////
+        Gson gson = new Gson();
+        String qnaJsonString = gson.toJson(qna);
+        MultipartBody.Part qnaToJson = MultipartBody.Part.createFormData("qna.json", qnaJsonString);
+
+        Token.setKey("asdasdasdasdasd");
+        Map<String, RequestBody> map = new HashMap<>();
+        map.put("title", qnaPart1);
+        map.put("content", qnaPart2);
+        map.put("name", qnaPart3);
+
+//        Uri fileUri1 = Uri.parse("http://cfile9.uf.tistory.com/image/25621D40573264E71FA362");
+        File originalFile = FileUtils.getFile(this, fileUri);
+//        File originalFile = new File(String.valueOf(fileUri));
+//        RequestBody filePart = RequestBody.create(MediaType.parse("multipart/form-data"), originalFile);
+
+//        File file = new File(filePath);
+//        RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+//        Call<ApiResponse> call = service.upload(token, userId, msg, requestBody);
+
+
+
+        RequestBody filePart = RequestBody.create(
+                MediaType.parse(getContentResolver().getType(fileUri)),
+                originalFile
+        );
+        // 이미지 넣을때 키값
+        MultipartBody.Part file = MultipartBody.Part.createFormData("userfile", originalFile.getName() , filePart);
+
+        Retrofit.Builder builder = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create());
+
+        Retrofit retrofit = builder.build();
+        UserClient client = retrofit.create(UserClient.class);
+
+        Call<ResponseBody> call = client.upload2(qnaPart1,qnaPart2, 3, file);
+//        Call<ResponseBody> call2 = client.upload(qnaToJson, file); // 제이슨 키값 캐치가 가능한경우.
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call,
+                                   Response<ResponseBody> response) {
+                if(response.code() == 200) {
+                    Toast.makeText(WriteActivity.this, "Yeah!!!", Toast.LENGTH_SHORT).show();
+                    Log.v("Upload", "success");
+//                    File file = new File(String.valueOf(fileUri));
+//                    file.delete();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(WriteActivity.this, "nooooo!!!", Toast.LENGTH_SHORT).show();
+                File file = new File(String.valueOf(fileUri));
+                file.delete();
+                Log.e("Upload error:", t.getMessage());
+            }
+        });
     }
 }

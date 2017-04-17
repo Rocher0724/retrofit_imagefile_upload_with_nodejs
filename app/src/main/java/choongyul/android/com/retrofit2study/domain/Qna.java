@@ -1,5 +1,6 @@
 package choongyul.android.com.retrofit2study.domain;
 
+
 /**
  * Created by myPC on 2017-04-11.
  */
@@ -10,6 +11,7 @@ public class Qna {
     String title;
     String content;
     String name;
+
 
     public String get_id() {
         return _id;
@@ -42,4 +44,5 @@ public class Qna {
     public void setName(String name) {
         this.name = name;
     }
+
 }
