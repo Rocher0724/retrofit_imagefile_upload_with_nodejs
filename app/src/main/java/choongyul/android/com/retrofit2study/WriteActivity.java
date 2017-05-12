@@ -416,7 +416,6 @@ public class WriteActivity extends AppCompatActivity {
         UserClient client = retrofit.create(UserClient.class);
 
         Call<ResponseBody> call = client.upload2(qnaPart1,qnaPart2, 3, file);
-//        Call<ResponseBody> call2 = client.upload(qnaToJson, file); // 제이슨 키값 캐치가 가능한경우.
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call,

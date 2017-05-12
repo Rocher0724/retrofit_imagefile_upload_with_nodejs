@@ -2,12 +2,15 @@ package choongyul.android.com.retrofit2study;
 
 import java.util.Map;
 
+import choongyul.android.com.retrofit2study.DataForHR.RealData;
 import choongyul.android.com.retrofit2study.domain.Data;
 import choongyul.android.com.retrofit2study.domain.Qna;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 /**
  * Created by myPC on 2017-04-11.
@@ -24,5 +27,12 @@ public interface DataInterface {
 
     @POST("asdasd")
     Call<String> asdasd(@Body Map a);
+
+    @GET("post")
+    Call<RealData> getd(
+            @Header("Authorization") String token,
+            @Query("page") int num
+    );
+
 
 }

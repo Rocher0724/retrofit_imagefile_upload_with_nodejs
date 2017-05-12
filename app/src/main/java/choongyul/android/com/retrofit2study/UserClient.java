@@ -2,6 +2,7 @@ package choongyul.android.com.retrofit2study;
 
 import java.util.Map;
 
+import choongyul.android.com.retrofit2study.domain.EmailSet;
 import choongyul.android.com.retrofit2study.domain.Qna;
 import choongyul.android.com.retrofit2study.domain.Token;
 import okhttp3.MultipartBody;
@@ -12,9 +13,11 @@ import retrofit2.http.Body;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
+import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
 import retrofit2.http.PartMap;
+import retrofit2.http.Path;
 
 /**
  * Created by myPC on 2017-04-11.
@@ -73,4 +76,19 @@ public interface UserClient {
             @Part("name") int name,
             @Part MultipartBody.Part file
     );
+
+    @POST("asdasd")
+    Call<ResponseBody> modifyWithoutImage(
+            @Header("Authorization") String token,
+            @Body Qna results
+    );
+
+    @POST("signup")
+    Call<ResponseBody> modifyWithoutImage1(
+            @Header("Authorization") String token,
+            @Body Qna results
+    );
+
+    @POST("signup")
+    Call<RequestBody> signup(@Body EmailSet emailSet);
 }

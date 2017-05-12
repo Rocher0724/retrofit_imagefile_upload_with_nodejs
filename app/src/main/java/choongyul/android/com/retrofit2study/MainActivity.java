@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,14 +20,17 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import choongyul.android.com.retrofit2study.DataForHR.RealData;
+import choongyul.android.com.retrofit2study.DataForHR.Results;
 import choongyul.android.com.retrofit2study.domain.Data;
 import choongyul.android.com.retrofit2study.domain.DataStore;
+import choongyul.android.com.retrofit2study.domain.EmailSet;
 import choongyul.android.com.retrofit2study.domain.Qna;
+import choongyul.android.com.retrofit2study.domain.Token;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -36,8 +38,9 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String SITE_URL = "http://192.168.0.13/";
+    public static final String SITE_URL = "http://192.168.0.194/";
     private static final int REQ_PERMISSION = 101;
+    private static final String TAG = "MainActivity";
     RecyclerView recyclerView;
     CustomAdapter adapter;
     List<Qna> datas;
@@ -65,7 +68,9 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                retrofitttt();
+//                retrofitttt();
+//                signup("test@naver.com","asdasdasd");
+                dataSetting();
             }
         });
     }
@@ -76,20 +81,23 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        DataInterface localhost = retrofit.create(DataInterface.class);
+        UserClient localhost = retrofit.create(UserClient.class);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("title", "aa");
-        map.put("content", "aaa");
-        map.put("name", "aaaa");
-        Call<String> result = localhost.asdasd(map);
+        Qna qna = new Qna();
+        qna.set_id("1");
+        qna.setTitle("1");
+        qna.setContent("1");
+        qna.setName("1");
+        Token.setKey("asdasdasdasdasd");
 
-        result.enqueue(new Callback<String>() {
+        Call<ResponseBody> result = localhost.modifyWithoutImage1(Token.getKey(), qna);
+
+        result.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 // 값이 정상적으로 리턴되었을 때
                 if( response.isSuccessful() ){
-
+                    Log.e("asdaasd",response.body().toString());
 
                     Log.e("값이","정상리턴");
                 } else {
@@ -98,8 +106,49 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
 
+            }
+        });
+    }
+
+    private void signup(String email, String password) {
+
+        Log.e(TAG,"regist 들어왔다.");
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(SITE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        UserClient localhost = retrofit.create(UserClient.class);
+        EmailSet emailSet = new EmailSet(email, password);
+
+        Call<RequestBody> call = localhost.signup(emailSet);
+
+        call.enqueue(new Callback<RequestBody>() {
+            @Override
+            public void onResponse(Call<RequestBody> call, Response<RequestBody> response) {
+                if( response.isSuccessful() ){
+                    if( response.code() == 200) {
+
+                        Toast.makeText(MainActivity.this, "계정이 생성되었습니다.", Toast.LENGTH_SHORT).show();
+//                        onBackPressed(); // 계정이 생성된 경우 로그인할수 있게 뒤로가기를 눌러준다.
+
+                        Log.e(TAG, "signup : 정상리턴");
+                    } else {
+                        // 동일한 정보를 가진 사용자가 있다.
+                        Toast.makeText(MainActivity.this, "동일한 정보의 사용자가 있습니다.", Toast.LENGTH_SHORT).show();
+
+                    }
+                } else {
+                    Log.e("signup","비정상적으로 리턴되었다. = " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<RequestBody> call, Throwable t) {
+                Log.e(TAG,"regist 서버통신 실패");
+                Log.e(TAG,t.toString());
             }
         });
     }
@@ -147,6 +196,93 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+//    private void setAuthor() {
+//
+//        String token = "Token fbea4ad53df55595a51ef08e1d9920ca014a1830";
+//        Log.e(TAG, "token : " + token);
+//
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("https://haru.ycsinabro.com/") // 포트까지가 베이스url이다.
+//                .addConverterFactory(GsonConverterFactory.create())
+//                .build();
+//        // 2. 사용할 인터페이스를 설정한다.
+//        DataInterface localhost = retrofit.create(DataInterface.class);
+//        // 3. 토큰을 보내 데이터를 가져온다
+//        Call<GetUserID> result = localhost.getAuthor(token);
+////        Call<ResponseBody> result = localhost.getAuthor();
+//        String[] str = {"1","2"};
+//        result.enqueue(new Callback<GetUserID>() {
+//            @Override
+//            public void onResponse(Call<GetUserID> call, Response<GetUserID> response) {
+//                Log.e(TAG,"코드 : " + response.code());
+//                switch (response.code()) {
+//                    case 200:
+//                        int te = response.body().getResults().size();
+//                        String asd = response.body().getResults().get(te-1).getId();
+//                        String qwe = response.body().getResults().get(te-1).getEmail();
+////                        DataTemp dataTemp = response.body();
+//                        Log.e(TAG, "id, email, length : " + asd + " " + qwe + " " +  te);
+////                        int size = dataTemp.getData().size();
+////                        int id = dataTemp.getData().get(0).getResults().getAuthor();
+////                        Log.e(TAG, "id : " + id);
+//                        break;
+//                    case 401:
+//                        Log.e(TAG, "setAuthor key 이름이 잘못되거나 유효하지 않은 token입니다.");
+////                        String detail = response.body().getDetail();
+////                        Log.e(TAG, "setAuthor detail : " + detail);
+//                        break;
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<GetUserID> call, Throwable t) {
+//
+//                Log.e(TAG,"setAuthor 서버통신 실패");
+//                Log.e(TAG,t.toString());
+//            }
+//        });
+//    }
+
+    private void dataSetting() {
+        String token = "Token fbea4ad53df55595a51ef08e1d9920ca014a1830";
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://haru.ycsinabro.com/") // 포트까지가 베이스url이다.
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        // 2. 사용할 인터페이스를 설정한다.
+        DataInterface localhost = retrofit.create(DataInterface.class);
+        int pageNum = 1;
+        // 3. 토큰을 보내 데이터를 가져온다
+        Call<RealData> result = localhost.getd(token, pageNum);
+
+        result.enqueue(new Callback<RealData>() {
+            @Override
+            public void onResponse(Call<RealData> call, Response<RealData> response) {
+                Log.e(TAG,"코드 : " + response.code());
+                switch (response.code()) {
+                    case 200:
+                        RealData data = response.body();
+                        int count = data.getCount();
+                        Log.e(TAG,"count : " + count);
+                        break;
+                    case 401:
+                        Log.e(TAG, "dataSetting 잘못된 요청입니다.");
+                        break;
+                    case 500:
+                        Log.e(TAG, "dataSetting 잘못된 페이지번호입니다.");
+                        // 사용자가 작성한 데이터가 없을때 404 에러가 나며 그냥 액티비티 체인지시켜주면됀다.
+                        break;
+                }
+            }
+            @Override
+            public void onFailure(Call<RealData> call, Throwable t) {
+                Log.e(TAG,"dataSetting 서버통신 실패");
+                Log.e(TAG,t.toString());
+            }
+        });
     }
 
 
